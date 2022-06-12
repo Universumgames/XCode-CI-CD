@@ -1,0 +1,37 @@
+stages:
+    - build
+    - test
+    - deploy
+
+test_app:
+    stage: test
+    when: manual
+    script:
+        - xcodebuild clean -project <your-project>.xcodeproj -scheme <scheme-to-export>
+        - xcodebuild test -project <your-project>.xcodeproj -scheme <scheme-to-export> -destination 'platform=iOS Simulator,name=iPhone 13,OS=15.5'
+
+upload_app:
+    stage: deploy
+    needs: []
+    when: manual
+    script:
+        - export PATH="<the-path-to-the-scripts>:$PATH"
+        - archiveExportUploadApp.sh "build" "iphoneos" "<appid-appstoreconnect>"
+    rules:
+        - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    artifacts:
+        paths:
+            - build/
+        expire_in: 1 hour
+
+build_webapp:
+    stage: build
+    script:
+        - cd "vue-webapp"
+        - echo $PATH
+        - npm install
+        - npm run build
+    artifacts:
+        paths:
+            - dist/
+        expire_in: 1 hour
